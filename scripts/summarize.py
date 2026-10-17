@@ -7,7 +7,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+import os
+
+ROOT = Path(os.environ.get('OFS_DATA_DIR') or Path(__file__).resolve().parent.parent / 'data')
 
 
 def top(counter):
@@ -15,7 +17,7 @@ def top(counter):
 
 
 def main():
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "visits.json"
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "visits.json"
     visits = json.loads(src.read_text())["visits"]
 
     summary = {
@@ -29,7 +31,7 @@ def main():
         "by_city": top(Counter(f"{v['city'] or '?'}, {v['country'] or '?'}" for v in visits)),
         "by_day": sorted(top(Counter(v["ts"][:10] for v in visits)), key=lambda r: r["key"]),
     }
-    out = ROOT / "data" / "summary.json"
+    out = ROOT / "summary.json"
     out.write_text(json.dumps(summary, indent=2))
     print(f"wrote {out}: {summary['total_views']} views")
 

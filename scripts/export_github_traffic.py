@@ -6,12 +6,13 @@ existing file (deduped by day). Needs the `gh` CLI logged in, or GH_TOKEN set.
     python scripts/export_github_traffic.py [owner/repo]
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 REPO = sys.argv[1] if len(sys.argv) > 1 else "KrunalPanchal1995/KrunalPanchal1995.github.io"
-OUT = Path(__file__).resolve().parent.parent / "data" / "github-traffic.json"
+OUT = Path(os.environ.get("OFS_DATA_DIR") or Path(__file__).resolve().parent.parent / "data") / "github-traffic.json"
 
 
 def gh(endpoint):

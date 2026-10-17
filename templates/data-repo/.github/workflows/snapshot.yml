@@ -17,6 +17,7 @@ jobs:
           OFS_ENDPOINT: ${{ vars.OFS_ENDPOINT }}
           OFS_ADMIN_TOKEN: ${{ secrets.OFS_ADMIN_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TRAFFIC_TOKEN }}
+          OFS_DATA_DIR: ${{ github.workspace }}/data
         run: |
           mkdir -p data
           cp -n ofs/scripts/*.py . 2>/dev/null || true

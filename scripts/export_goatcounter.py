@@ -10,7 +10,7 @@ import os
 import urllib.request
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "data" / "goatcounter.json"
+OUT = Path(os.environ.get("OFS_DATA_DIR") or Path(__file__).resolve().parent.parent / "data") / "goatcounter.json"
 
 
 def get(base, token, path):
