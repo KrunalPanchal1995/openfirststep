@@ -13,7 +13,7 @@ OUT = Path(__file__).resolve().parent.parent / "data" / "visits.json"
 def main():
     endpoint = os.environ["OFS_ENDPOINT"].rstrip("/")
     token = os.environ["OFS_ADMIN_TOKEN"]
-    req = urllib.request.Request(endpoint + "/export", headers={"Authorization": f"Bearer {token}"})
+    req = urllib.request.Request(endpoint + "/export", headers={"Authorization": f"Bearer {token}", "User-Agent": "openfirststep-exporter/1.0"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.load(resp)
     OUT.parent.mkdir(exist_ok=True)

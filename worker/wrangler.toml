@@ -9,6 +9,6 @@ ALLOWED_ORIGIN = "https://krunalpanchal1995.github.io"
 [[d1_databases]]
 binding = "DB"
 database_name = "ofs"
-database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+database_id = "67a764c0-ca20-4121-bc2e-b301ed903d27"
 
 # Set the admin token with: wrangler secret put ADMIN_TOKEN

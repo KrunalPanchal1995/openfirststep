@@ -14,7 +14,7 @@ OUT = Path(__file__).resolve().parent.parent / "data" / "goatcounter.json"
 
 
 def get(base, token, path):
-    req = urllib.request.Request(base + path, headers={"Authorization": f"Bearer {token}"})
+    req = urllib.request.Request(base + path, headers={"Authorization": f"Bearer {token}", "User-Agent": "openfirststep-exporter/1.0"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.load(resp)
 
