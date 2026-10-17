@@ -21,7 +21,7 @@ jobs:
           mkdir -p data
           cp -n ofs/scripts/*.py . 2>/dev/null || true
           python ofs/scripts/export_worker.py
-          python ofs/scripts/export_github_traffic.py
+          if [ -n "$GH_TOKEN" ]; then python ofs/scripts/export_github_traffic.py; else echo 'GH_TRAFFIC_TOKEN not set, skipping GitHub traffic'; fi
           python ofs/scripts/summarize.py
       - name: Commit
         run: |
