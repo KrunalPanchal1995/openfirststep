@@ -39,4 +39,16 @@ assert.equal((await ex({})).status, 401);
 assert.equal((await ex({ Authorization: "Bearer wrong" })).status, 401);
 const ok = await ex({ Authorization: "Bearer secret" });
 assert.equal(ok.status, 200); assert.equal((await ok.json()).count, 1);
+// hardening
+const big = JSON.stringify({ p: "/", via: "x".repeat(3000) });
+assert.equal((await hit(big)).status, 413);                                   // oversized body
+assert.equal((await hit(JSON.stringify({ p: "/../etc/passwd" }))).status, 400); // traversal
+assert.equal((await hit(JSON.stringify({ p: "/a b" }))).status, 400);           // space not allowed
+assert.equal((await hit(JSON.stringify({ p: "/<script>" }))).status, 400);
+assert.equal((await hit(JSON.stringify({ p: "/caf%C3%A9/" }))).status, 202);    // percent-encoding is fine
+assert.equal((await ex({ Authorization: "Bearer s" })).status, 401);            // shorter wrong token
+assert.equal((await ex({ Authorization: "Bearer " + "s".repeat(500) })).status, 401); // longer wrong token
+const exp = await ex({ Authorization: "Bearer secret" });
+assert.equal(exp.headers.get("Cache-Control"), "no-store");
+assert.equal(exp.headers.get("X-Content-Type-Options"), "nosniff");
 console.log("worker tests passed");

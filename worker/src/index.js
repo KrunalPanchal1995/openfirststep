@@ -6,6 +6,8 @@
 
 const MAX_PATH = 200;
 const MAX_TAG = 40;
+const MAX_BODY = 2048; // bytes; a real beacon is ~60
+const PATH_RE = /^\/[A-Za-z0-9\/_.~%-]*$/;
 
 function cors(env) {
   return {
@@ -35,8 +37,9 @@ function cleanHost(value) {
 }
 
 function cleanPath(value) {
-  if (typeof value !== "string" || !value.startsWith("/")) return null;
-  return value.split(/[?#]/)[0].slice(0, MAX_PATH);
+  if (typeof value !== "string" || value.length > MAX_PATH + 100) return null;
+  const path = value.split(/[?#]/)[0].slice(0, MAX_PATH);
+  return PATH_RE.test(path) && !path.includes("..") ? path : null;
 }
 
 function cleanTag(value) {
@@ -45,19 +48,29 @@ function cleanTag(value) {
   return tag || null;
 }
 
-function authorized(request, env) {
-  const header = request.headers.get("Authorization") || "";
-  return Boolean(env.ADMIN_TOKEN) && header === `Bearer ${env.ADMIN_TOKEN}`;
+// Compare SHA-256 digests byte by byte without early exit, so timing reveals nothing about the token.
+async function authorized(request, env) {
+  if (!env.ADMIN_TOKEN) return false;
+  const enc = new TextEncoder();
+  const digest = async (text) => new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(text)));
+  const [a, b] = await Promise.all([digest(request.headers.get("Authorization") || ""), digest(`Bearer ${env.ADMIN_TOKEN}`)]);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
 }
 
 async function handleHit(request, env) {
   if (request.headers.get("Origin") !== env.ALLOWED_ORIGIN) {
     return json({ error: "forbidden" }, 403, env);
   }
+  const declared = Number(request.headers.get("Content-Length") || 0);
+  if (declared > MAX_BODY) return json({ error: "too large" }, 413, env);
   let data;
   try {
     // sendBeacon posts text/plain, so parse the body ourselves.
-    data = JSON.parse(await request.text());
+    const text = await request.text();
+    if (text.length > MAX_BODY) return json({ error: "too large" }, 413, env);
+    data = JSON.parse(text);
   } catch {
     return json({ error: "bad json" }, 400, env);
   }
@@ -91,9 +104,12 @@ async function handleHit(request, env) {
 }
 
 async function handleExport(request, env) {
-  if (!authorized(request, env)) return json({ error: "unauthorized" }, 401, env);
+  if (!(await authorized(request, env))) return json({ error: "unauthorized" }, 401, env);
   const { results } = await env.DB.prepare("SELECT * FROM visits ORDER BY id").all();
-  return json({ exported_at: new Date().toISOString(), count: results.length, visits: results }, 200, env);
+  return json({ exported_at: new Date().toISOString(), count: results.length, visits: results }, 200, env, {
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+  });
 }
 
 async function handleStats(env) {
