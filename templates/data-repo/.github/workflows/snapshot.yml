@@ -1,0 +1,29 @@
+# Copy into the PRIVATE `openfirststep-data` repo (with the scripts/ folder from openfirststep).
+name: snapshot
+on:
+  schedule: [{ cron: "15 3 * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: { repository: KrunalPanchal1995/openfirststep, path: ofs }
+      - name: Export
+        env:
+          OFS_ENDPOINT: ${{ vars.OFS_ENDPOINT }}
+          OFS_ADMIN_TOKEN: ${{ secrets.OFS_ADMIN_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TRAFFIC_TOKEN }}
+        run: |
+          mkdir -p data
+          cp -n ofs/scripts/*.py . 2>/dev/null || true
+          python ofs/scripts/export_worker.py
+          python ofs/scripts/export_github_traffic.py
+          python ofs/scripts/summarize.py
+      - name: Commit
+        run: |
+          git config user.name "ofs-bot"; git config user.email "ofs-bot@users.noreply.github.com"
+          git add data && (git diff --cached --quiet || git commit -m "snapshot $(date -u +%F)") && git push

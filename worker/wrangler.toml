@@ -1,0 +1,14 @@
+name = "openfirststep"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://krunalpanchal1995.github.io"
+
+# Run `wrangler d1 create ofs` and paste the database_id it prints.
+[[d1_databases]]
+binding = "DB"
+database_name = "ofs"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+
+# Set the admin token with: wrangler secret put ADMIN_TOKEN
